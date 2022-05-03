@@ -12,5 +12,8 @@ input file format see [example](./example)
 There will be three outputs:
 1. tgmi_network.txt  
 2. tgmi_TF.txt
-3. tgmi_Gene.txt  
+3. tgmi_Gene.txt
+
+## Reference
+Chathura Gunasekara, Kui Zhang, Wenping Deng, Laura Brown, Hairong Wei, TGMI: an efficient algorithm for identifying pathway regulators through evaluation of triple-gene mutual interaction, Nucleic Acids Research, Volume 46, Issue 11, 20 June 2018, Page e67, https://doi.org/10.1093/nar/gky210
  
