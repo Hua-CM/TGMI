@@ -5,13 +5,16 @@
 # @Usage   :
 # @Note    : 
 
+import argparse
+from functools import partial
+from pathlib import Path
+
 import pandas as pd
 from pathos.pools import ProcessPool
-from functools import partial
-from os import path
+from TGMI import triple_interaction, p_adjust, discretize
 
 
-def TGMI(expression, TFs, genes, permutation=1000, ncores=4):
+def TGMI(expression: pd.DataFrame, TFs: list, genes: list, permutation=1000, ncores=4):
     """
     :param expression: expression matrix. index are genes, columns are samples
     :param TFs: TFs gene list
@@ -20,7 +23,7 @@ def TGMI(expression, TFs, genes, permutation=1000, ncores=4):
     :param ncores: number of parallel cores
     :return: TF-gene correlation, TF freq, gene freq
     """
-    from TGMI import triple_interaction, p_adjust, discretize
+    
     # generate a discretized dictionary
     discretized = expression.apply(discretize, axis=1).to_dict()
     # generate gene_pairs
@@ -75,7 +78,6 @@ def TGMI(expression, TFs, genes, permutation=1000, ncores=4):
 
 
 def getArgs():
-    import argparse
     cmdparser = argparse.ArgumentParser(
         prog="TGMI",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -87,11 +89,11 @@ def getArgs():
         Infer Gene regulation networt (GRN) using TGMI algorithm.
         -------------------------------------------------------------------------------------------------------
         ''')
-    cmdparser.add_argument('-i', '--input', required=True,
+    cmdparser.add_argument('-i', '--input', required=True, type=Path,
                            help='The expression matrix')
-    cmdparser.add_argument('-t', '--tf', required=True,
+    cmdparser.add_argument('-t', '--tf', required=True, type=Path,
                            help='The transcription factors (TFs) list file')
-    cmdparser.add_argument('-g', '--gene', required=True,
+    cmdparser.add_argument('-g', '--gene', required=True, type=Path,
                            help='The genes list file')
     cmdparser.add_argument('-@', '--threads', default=4,
                            help='Parallel cores number. Default: 4')
@@ -107,12 +109,14 @@ def main(args):
     tb_expression = pd.read_table(args.input)
     tb_expression.index = tb_expression.iloc[:, 0]
     tb_expression = tb_expression.iloc[:, 1:]
-    tfs = open(args.tf).read().strip().split('\n')
-    genes = open(args.gene).read().strip().split('\n')
+    tfs = args.tf.read_text().strip().split('\n')
+    genes = args.gene.read_text().strip().split('\n')
+    # If there are genes that are not present in either TFs or targets.
+    tb_expression = tb_expression[tb_expression.index.isin(tfs + genes)]
     TF_network, TF_rank, gene_rank = TGMI(tb_expression, tfs, genes, permutation=args.permutation, ncores=args.threads)
-    TF_network.to_csv('_network'.join(path.splitext(args.out)), sep='\t', index=False)
-    TF_rank.to_csv('_TF'.join(path.splitext(args.out)), sep='\t', index=False)
-    gene_rank.to_csv('_Gene'.join(path.splitext(args.out)), sep='\t', index=False)
+    TF_network.to_csv(args.out.parent / (args.out.stem + '_network'), sep='\t', index=False)
+    TF_rank.to_csv(args.out.parent / (args.out.stem + '_tf'), sep='\t', index=False)
+    gene_rank.to_csv(args.out.parent / (args.out.stem + '_gene'), sep='\t', index=False)
 
 
 if __name__ == '__main__':
