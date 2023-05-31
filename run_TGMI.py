@@ -99,7 +99,7 @@ def getArgs():
                            help='Parallel cores number. Default: 4')
     cmdparser.add_argument('-p', '--permutation', default=1000,
                            help='Permutation times for calculate P-value. Default: 1000')
-    cmdparser.add_argument('-o', '--output', required=True,
+    cmdparser.add_argument('-o', '--output', required=True, type=Path,
                            help='Output file path. e.g. /root/TGMI.txt')
     args = cmdparser.parse_args()
     return args
@@ -114,9 +114,9 @@ def main(args):
     # If there are genes that are not present in either TFs or targets.
     tb_expression = tb_expression[tb_expression.index.isin(tfs + genes)]
     TF_network, TF_rank, gene_rank = TGMI(tb_expression, tfs, genes, permutation=args.permutation, ncores=args.threads)
-    TF_network.to_csv(args.out.parent / (args.out.stem + '_network'), sep='\t', index=False)
-    TF_rank.to_csv(args.out.parent / (args.out.stem + '_tf'), sep='\t', index=False)
-    gene_rank.to_csv(args.out.parent / (args.out.stem + '_gene'), sep='\t', index=False)
+    TF_network.to_csv(args.output.parent / (args.output.stem + '_network'), sep='\t', index=False)
+    TF_rank.to_csv(args.output.parent / (args.output.stem + '_tf'), sep='\t', index=False)
+    gene_rank.to_csv(args.output.parent / (args.output.stem + '_gene'), sep='\t', index=False)
 
 
 if __name__ == '__main__':
